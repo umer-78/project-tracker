@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%234f46e5'/><path d='M9 16l5 5 9-10' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div id="login" class="login">
+    <form class="card" id="loginForm">
+      <h1>Project Tracker</h1>
+      <p class="muted">Sign in to see the board.</p>
+      <label for="email">Email</label>
+      <input id="email" type="email" value="umer@example.com" autocomplete="username" required>
+      <label for="password" style="margin-top:10px">Password</label>
+      <input id="password" type="password" value="password123" autocomplete="current-password" required>
+      <p class="error" id="loginError" role="alert"></p>
+      <button class="primary" type="submit" style="width:100%">Sign in</button>
+      <p class="fine muted" style="margin-bottom:0">Demo data: <code>tracker demo</code> creates these accounts.</p>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <header class="appbar">
+      <strong>Project Tracker</strong>
+      <select id="projectSelect" aria-label="Project"></select>
+      <input id="search" type="search" placeholder="Search tasks…" aria-label="Search tasks">
+      <select id="assigneeFilter" aria-label="Filter by assignee"><option value="">Everyone</option></select>
+      <select id="sprintFilter" aria-label="Filter by sprint"><option value="">All sprints</option></select>
+      <span class="spacer"></span>
+      <button id="newTask" class="primary">New task</button>
+      <span class="who" id="who"></span>
+      <button id="logout">Sign out</button>
+    </header>
+
+    <main class="wrap">
+      <section class="stats" id="stats"></section>
+
+      <div class="board" id="board"></div>
+
+      <section class="grid two" style="margin-top:18px">
+        <div class="card">
+          <h2>Sprint burndown</h2>
+          <select id="sprintSelect" aria-label="Sprint for the burndown chart"></select>
+          <canvas id="burndown" height="220" aria-label="Burndown chart"></canvas>
+          <p class="fine muted" id="burndownNote"></p>
+        </div>
+        <div class="card">
+          <h2>Workload</h2>
+          <div id="workload"></div>
+          <h2 style="margin-top:18px">Recent activity</h2>
+          <ul class="activity" id="activity"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="taskDialog">
+    <form method="dialog" id="taskForm">
+      <h2 id="taskDialogTitle">New task</h2>
+      <label for="taskTitle">Title</label>
+      <input id="taskTitle" required maxlength="200">
+      <label for="taskDescription" style="margin-top:8px">Description</label>
+      <textarea id="taskDescription" rows="3"></textarea>
+      <div class="row" style="margin-top:8px">
+        <div><label for="taskStatus">Status</label><select id="taskStatus"></select></div>
+        <div><label for="taskPriority">Priority</label><select id="taskPriority"></select></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label for="taskAssignee">Assignee</label><select id="taskAssignee"></select></div>
+        <div><label for="taskSprint">Sprint</label><select id="taskSprint"></select></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label for="taskEstimate">Estimate (hours)</label><input id="taskEstimate" type="number" min="0" step="0.5" value="0"></div>
+        <div><label for="taskDue">Due date</label><input id="taskDue" type="date"></div>
+      </div>
+      <div id="taskComments"></div>
+      <p class="error" id="taskError" role="alert"></p>
+      <div class="row" style="margin-top:12px;justify-content:flex-end">
+        <button type="button" id="taskDelete" class="danger" hidden>Delete</button>
+        <button type="button" id="taskCancel">Cancel</button>
+        <button type="button" id="taskSave" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>
