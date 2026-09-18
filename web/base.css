@@ -32,6 +32,9 @@
   }
 }
 * { box-sizing: border-box; }
+/* An element with the hidden attribute must stay hidden even when a class sets
+   its display (a grid overlay or a flex panel would otherwise win). */
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
