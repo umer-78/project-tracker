@@ -1,3 +1,4 @@
+import sqlite3
 from datetime import date, timedelta
 
 import pytest
@@ -88,13 +89,13 @@ def test_only_admins_create_users(client):
 
 # ------------------------------------------------------------------ database
 def test_foreign_keys_are_enforced(db):
-    with pytest.raises(Exception):
+    with pytest.raises(sqlite3.IntegrityError, match="FOREIGN KEY"):
         db.execute("INSERT INTO tasks (project_id, title) VALUES (9999, 'orphan')")
 
 
 def test_status_and_priority_are_constrained(seeded):
     db, info = seeded
-    with pytest.raises(Exception):
+    with pytest.raises(sqlite3.IntegrityError, match="CHECK constraint"):
         db.execute("INSERT INTO tasks (project_id, title, status) VALUES (?, 'x', 'nonsense')",
                    (info["projects"]["WEB"],))
 
@@ -241,5 +242,7 @@ def test_health_and_ui(client):
 
 def test_seed_refuses_to_run_twice(db):
     seed(db)
-    with pytest.raises(Exception):
+    # The unique index on users.email is what stops a second run duplicating
+    # everybody, so that is the error the test should be pinning.
+    with pytest.raises(sqlite3.IntegrityError, match="UNIQUE constraint failed: users.email"):
         seed(db)

@@ -13,7 +13,7 @@ requires-python = ">=3.10"
 dependencies = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "pydantic>=2.6"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.5", "httpx>=0.27"]
+dev = ["pytest>=8", "ruff==0.16.8", "httpx>=0.27"]
 
 [project.scripts]
 tracker = "tracker.cli:main"
@@ -30,3 +30,17 @@ pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
+# An explicit rule set, rather than whatever the newest ruff turns on by default:
+# an unpinned linter with implicit rules means CI breaks on someone else's release
+# schedule, not on a change to this code.
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI expresses dependency injection as a call in an argument default —
+# `user: User = Depends(current_user)`. B008 reads that as a mutable default
+# evaluated once at import, which is exactly what it is; FastAPI resolves it per
+# request instead. It is the framework's documented idiom, not a bug here.
+"src/tracker/api.py" = ["B008"]
