@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Tracker — Interactive Demo</title>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #eef0f4; --border: #dde1e8;
+  --text: #16181d; --muted: #5d6573; --accent: #2563eb; --accent-ink: #ffffff;
+  --good: #15803d; --bad: #b91c1c; --radius: 12px;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 16px rgb(16 24 40 / 0.05);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1116; --surface: #161a21; --surface-2: #1d222b; --border: #2a303b;
+    --text: #e8eaee; --muted: #9aa3b2; --accent: #60a5fa; --accent-ink: #0b1220;
+    --good: #4ade80; --bad: #f87171; --shadow: none; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+a { color: var(--accent); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+header h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.02em; }
+header p { margin: 4px 0 0; color: var(--muted); max-width: 640px; }
+.gh { font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--surface); padding: 8px 14px; border-radius: var(--radius); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; margin-top: 16px; }
+.card h2 { margin: 0 0 12px; font-size: 1.05rem; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 14px; }
+.controls label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 3px; }
+input, select, button { font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+button { background: var(--accent); color: var(--accent-ink); border: none; cursor: pointer; font-weight: 600; }
+button:hover { filter: brightness(1.08); }
+.board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+@media (max-width: 860px) { .board { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .board { grid-template-columns: 1fr; } }
+.col { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; min-height: 200px; }
+.col.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface-2)); }
+.col h3 { margin: 0 0 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); display: flex; justify-content: space-between; }
+.card-task { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px; cursor: grab; box-shadow: var(--shadow); }
+.card-task:active { cursor: grabbing; }
+.card-task.overdue { border-left: 3px solid var(--bad); }
+.card-task .t { font-weight: 600; font-size: 0.88rem; line-height: 1.3; }
+.card-task .m { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; font-size: 0.72rem; color: var(--muted); align-items: center; }
+.pill { padding: 1px 6px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface-2); }
+.pill.urgent, .pill.high { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, var(--border)); }
+.pill.med { color: var(--accent); }
+.avatar { display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 0.65rem; font-weight: 700; align-items: center; justify-content: center; }
+.mv { display: flex; gap: 4px; margin-top: 6px; }
+.mv button { font-size: 0.7rem; padding: 2px 7px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+.stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; font-size: 0.9rem; }
+.stats b { font-family: var(--mono); }
+canvas { width: 100%; height: auto; display: block; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.legend { display: flex; gap: 16px; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.legend .ideal::before { background: var(--muted); }
+.legend .actual::before { background: var(--accent); }
+footer { margin-top: 32px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+footer a { color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Project Tracker</h1>
+    <p>Kanban board with drag-and-drop, plus a sprint burndown drawn from real task history. Drag cards, or use the ← → buttons for keyboard moves.</p>
+  </div>
+  <a class="gh" href="https://github.com/umer-78/project-tracker" rel="noopener">View on GitHub</a>
+</header>
+
+<main>
+<section class="card" aria-label="Board controls">
+  <div class="controls">
+    <div>
+      <label for="filterText">Filter</label>
+      <input id="filterText" type="search" placeholder="title or assignee…">
+    </div>
+    <div>
+      <label for="filterAssignee">Assignee</label>
+      <select id="filterAssignee"><option value="">All</option></select>
+    </div>
+    <div>
+      <label for="sprint">Sprint</label>
+      <select id="sprint"></select>
+    </div>
+    <button id="btnAdd" type="button">+ Add task</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="board" id="board">
+    <div class="col" data-status="todo"><h3>To do <span id="c-todo">0</span></h3><div class="drop" data-status="todo"></div></div>
+    <div class="col" data-status="in_progress"><h3>In progress <span id="c-in_progress">0</span></h3><div class="drop" data-status="in_progress"></div></div>
+    <div class="col" data-status="review"><h3>Review <span id="c-review">0</span></h3><div class="drop" data-status="review"></div></div>
+    <div class="col" data-status="done"><h3>Done <span id="c-done">0</span></h3><div class="drop" data-status="done"></div></div>
+  </div>
+</section>
+
+<section class="card" aria-label="Sprint burndown">
+  <h2>Sprint burndown — <span id="sprintName"></span></h2>
+  <p style="margin-top:-6px;color:var(--muted);font-size:.88rem">Ideal line from committed hours to zero. Actual line stops at today — it never guesses the future.</p>
+  <canvas id="burndown" width="900" height="320" role="img" aria-label="Burndown chart"></canvas>
+  <div class="legend"><span class="ideal">Ideal</span><span class="actual">Actual (remaining)</span></div>
+</section>
+</main>
+
+<footer>
+  <p>21 tests passing · <a href="https://github.com/umer-78">github.com/umer-78</a></p>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const STATUSES = ["todo", "in_progress", "review", "done"];
+  const PEOPLE = ["UH", "AK", "BA", "SI"];
+  const NAMES = { UH: "Umer Hashmi", AK: "Ayesha Khan", BA: "Bilal Ahmed", SI: "Sara Iqbal" };
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const dayOffset = n => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+  const iso = d => d.toISOString().slice(0, 10);
+
+  let nextId = 1;
+  const sprints = [
+    { id: 7, name: "Sprint 7", starts: dayOffset(-19), ends: dayOffset(-6), goal: "Sign-up and onboarding end to end" },
+    { id: 8, name: "Sprint 8", starts: dayOffset(-5), ends: dayOffset(8), goal: "Board usability and reporting" }
+  ];
+
+  let tasks = [
+    { id: nextId++, title: "Design the onboarding flow", status: "done", priority: "high", hours: 8, assignee: "AK", due: dayOffset(-8), sprint: 7, completedAt: dayOffset(-17) },
+    { id: nextId++, title: "Build the sign-up API", status: "done", priority: "high", hours: 13, assignee: "UH", due: dayOffset(-6), sprint: 7, completedAt: dayOffset(-15) },
+    { id: nextId++, title: "Password reset by e-mail", status: "done", priority: "medium", hours: 5, assignee: "BA", due: dayOffset(-7), sprint: 7, completedAt: dayOffset(-13) },
+    { id: nextId++, title: "Kanban drag and drop", status: "done", priority: "high", hours: 8, assignee: "SI", due: dayOffset(-6), sprint: 7, completedAt: dayOffset(-11) },
+    { id: nextId++, title: "Task filters", status: "done", priority: "medium", hours: 5, assignee: "UH", due: dayOffset(-6), sprint: 7, completedAt: dayOffset(-9) },
+    { id: nextId++, title: "CSV export", status: "done", priority: "low", hours: 3, assignee: "AK", due: dayOffset(3), sprint: 8, completedAt: dayOffset(-4) },
+    { id: nextId++, title: "Burndown chart", status: "done", priority: "medium", hours: 8, assignee: "BA", due: dayOffset(4), sprint: 8, completedAt: dayOffset(-2) },
+    { id: nextId++, title: "Audit log", status: "in_progress", priority: "medium", hours: 5, assignee: "SI", due: dayOffset(1), sprint: 8, completedAt: null },
+    { id: nextId++, title: "Dark mode", status: "todo", priority: "low", hours: 3, assignee: "UH", due: dayOffset(6), sprint: 8, completedAt: null },
+    { id: nextId++, title: "Load test the API", status: "in_progress", priority: "medium", hours: 5, assignee: "AK", due: dayOffset(-2), sprint: 8, completedAt: null },
+    { id: nextId++, title: "Fix flaky sprint test", status: "review", priority: "urgent", hours: 2, assignee: "BA", due: dayOffset(3), sprint: 8, completedAt: null },
+    { id: nextId++, title: "Write the deployment runbook", status: "todo", priority: "medium", hours: 3, assignee: "SI", due: dayOffset(9), sprint: 8, completedAt: null },
+    { id: nextId++, title: "Push notification service", status: "todo", priority: "high", hours: 13, assignee: "UH", due: dayOffset(12), sprint: null, completedAt: null },
+    { id: nextId++, title: "Offline task cache", status: "in_progress", priority: "medium", hours: 8, assignee: "AK", due: dayOffset(-3), sprint: null, completedAt: null }
+  ];
+
+  function visibleTasks() {
+    const q = $("filterText").value.trim().toLowerCase();
+    const who = $("filterAssignee").value;
+    const sp = $("sprint").value;
+    return tasks.filter(t => {
+      if (q && !(t.title.toLowerCase().includes(q) || (NAMES[t.assignee] || "").toLowerCase().includes(q))) return false;
+      if (who && t.assignee !== who) return false;
+      if (sp !== "" && String(t.sprint) !== sp) return false;
+      return true;
+    });
+  }
+
+  function isOverdue(t) {
+    return t.status !== "done" && t.due && t.due < today;
+  }
+
+  function renderBoard() {
+    const vis = visibleTasks();
+    for (const st of STATUSES) {
+      const drop = document.querySelector('.drop[data-status="' + st + '"]');
+      drop.innerHTML = "";
+      const col = drop.parentElement;
+      const items = vis.filter(t => t.status === st);
+      $("c-" + st).textContent = items.length;
+      for (const t of items) {
+        const el = document.createElement("article");
+        el.className = "card-task" + (isOverdue(t) ? " overdue" : "");
+        el.draggable = true;
+        el.dataset.id = t.id;
+        el.tabIndex = 0;
+        const idx = STATUSES.indexOf(t.status);
+        el.innerHTML =
+          '<div class="t">' + esc(t.title) + '</div>' +
+          '<div class="m">' +
+            '<span class="pill ' + t.priority + '">' + t.priority + '</span>' +
+            '<span class="pill">' + t.hours + 'h</span>' +
+            (t.due ? '<span class="pill" style="' + (isOverdue(t) ? "color:var(--bad)" : "") + '">' + iso(t.due) + '</span>' : '') +
+            '<span class="avatar" title="' + esc(NAMES[t.assignee] || t.assignee) + '">' + t.assignee + '</span>' +
+            (t.sprint ? '<span class="pill">S' + t.sprint + '</span>' : '') +
+          '</div>' +
+          '<div class="mv">' +
+            (idx > 0 ? '<button type="button" data-dir="-1" aria-label="Move left">←</button>' : '') +
+            (idx < 3 ? '<button type="button" data-dir="1" aria-label="Move right">→</button>' : '') +
+          '</div>';
+        el.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", String(t.id)); });
+        el.querySelectorAll(".mv button").forEach(b => b.addEventListener("click", e => {
+          e.stopPropagation();
+          moveTask(t.id, STATUSES.indexOf(t.status) + Number(b.dataset.dir));
+        }));
+        el.addEventListener("keydown", e => {
+          if (e.key === "ArrowRight") { e.preventDefault(); moveTask(t.id, idx + 1); }
+          if (e.key === "ArrowLeft") { e.preventDefault(); moveTask(t.id, idx - 1); }
+        });
+        drop.appendChild(el);
+      }
+    }
+    renderStats();
+    drawBurndown();
+  }
+
+  function moveTask(id, toIndex) {
+    if (toIndex < 0 || toIndex > 3) return;
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    const newStatus = STATUSES[toIndex];
+    if (t.status === newStatus) return;
+    t.status = newStatus;
+    if (newStatus === "done") t.completedAt = new Date(today);
+    else t.completedAt = null;
+    renderBoard();
+  }
+
+  function renderStats() {
+    const vis = visibleTasks();
+    const total = vis.length;
+    const done = vis.filter(t => t.status === "done").length;
+    const overdue = vis.filter(isOverdue).length;
+    const committed = vis.filter(t => t.sprint === currentSprint().id).reduce((s, t) => s + t.hours, 0);
+    const remaining = vis.filter(t => t.sprint === currentSprint().id && t.status !== "done").reduce((s, t) => s + t.hours, 0);
+    $("stats").innerHTML =
+      '<span>Tasks <b>' + done + "/" + total + "</b></span>" +
+      '<span>Completion <b>' + (total ? Math.round(100 * done / total) : 0) + "%</b></span>" +
+      '<span>Overdue <b style="color:' + (overdue ? "var(--bad)" : "inherit") + '">' + overdue + "</b></span>" +
+      '<span>Sprint committed <b>' + committed + "h</b></span>" +
+      '<span>Remaining <b>' + remaining + "h</b></span>";
+  }
+
+  function currentSprint() {
+    const id = Number($("sprint").value) || sprints[1].id;
+    return sprints.find(s => s.id === id) || sprints[1];
+  }
+
+  // --- burndown: remaining estimated hours per day, actual stops at today ---
+  function burndownData(sprint) {
+    const days = [];
+    const n = Math.round((sprint.ends - sprint.starts) / 86400000) + 1;
+    for (let i = 0; i < n; i++) { const d = new Date(sprint.starts); d.setDate(d.getDate() + i); days.push(d); }
+    const sprintTasks = tasks.filter(t => t.sprint === sprint.id);
+    const committed = sprintTasks.reduce((s, t) => s + t.hours, 0);
+    const step = n > 1 ? committed / (n - 1) : committed;
+    const ideal = days.map((_, i) => Math.max(0, committed - step * i));
+    const actual = days.map(d => {
+      if (d > today) return null;
+      let doneHours = 0;
+      for (const t of sprintTasks) {
+        if (t.completedAt && t.completedAt <= d) doneHours += t.hours;
+        else if (t.status === "done" && !t.completedAt && d >= today) doneHours += t.hours;
+      }
+      // tasks done today but completedAt set to today: count once day reached
+      for (const t of sprintTasks) {
+        if (t.status === "done" && t.completedAt && t.completedAt.toDateString() === d.toDateString() && d <= today) {
+          // already counted above via <=
+        }
+      }
+      return Math.round((committed - doneHours) * 100) / 100;
+    });
+    // Fix: recompute actual cleanly
+    const actual2 = days.map(d => {
+      if (d > today) return null;
+      let doneHours = 0;
+      for (const t of sprintTasks) {
+        if (t.completedAt && t.completedAt <= d) doneHours += t.hours;
+      }
+      return Math.round((committed - doneHours) * 100) / 100;
+    });
+    return { days, ideal, actual: actual2, committed };
+  }
+
+  function drawBurndown() {
+    const sprint = currentSprint();
+    $("sprintName").textContent = sprint.name + " — " + sprint.goal;
+    const canvas = $("burndown");
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth || 900, cssH = 320;
+    canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+    ctx.scale(dpr, dpr);
+    const W = cssW, H = cssH;
+    ctx.clearRect(0, 0, W, H);
+    const cs = getComputedStyle(document.documentElement);
+    const border = cs.getPropertyValue("--border").trim() || "#dde1e8";
+    const muted = cs.getPropertyValue("--muted").trim() || "#5d6573";
+    const accent = cs.getPropertyValue("--accent").trim() || "#2563eb";
+    const text = cs.getPropertyValue("--text").trim() || "#16181d";
+
+    const data = burndownData(sprint);
+    const { days, ideal, actual } = data;
+    if (!days.length) return;
+    const pad = { l: 46, r: 16, t: 16, b: 34 };
+    const plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+    const maxY = Math.max(data.committed, 1);
+    const x = i => pad.l + (days.length === 1 ? plotW / 2 : (i / (days.length - 1)) * plotW);
+    const y = v => pad.t + plotH - (v / maxY) * plotH;
+
+    ctx.strokeStyle = border; ctx.fillStyle = muted; ctx.font = "11px sans-serif"; ctx.lineWidth = 1;
+    const ticks = 4;
+    for (let i = 0; i <= ticks; i++) {
+      const v = (maxY / ticks) * i;
+      const yy = y(v);
+      ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+      ctx.textAlign = "right"; ctx.fillText(Math.round(v) + "h", pad.l - 6, yy + 4);
+    }
+    ctx.textAlign = "center";
+    const labelEvery = Math.ceil(days.length / 8);
+    days.forEach((d, i) => {
+      if (i % labelEvery === 0 || i === days.length - 1) {
+        ctx.fillText((d.getMonth() + 1) + "/" + d.getDate(), x(i), H - 10);
+      }
+    });
+
+    // ideal
+    ctx.strokeStyle = muted; ctx.setLineDash([6, 5]); ctx.lineWidth = 2;
+    ctx.beginPath();
+    ideal.forEach((v, i) => { i === 0 ? ctx.moveTo(x(i), y(v)) : ctx.lineTo(x(i), y(v)); });
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // actual (stops at today)
+    ctx.strokeStyle = accent; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let started = false;
+    actual.forEach((v, i) => {
+      if (v === null) return;
+      if (!started) { ctx.moveTo(x(i), y(v)); started = true; }
+      else ctx.lineTo(x(i), y(v));
+    });
+    ctx.stroke();
+
+    // today marker
+    const lastIdx = actual.reduce((acc, v, i) => v === null ? acc : i, -1);
+    if (lastIdx >= 0) {
+      ctx.fillStyle = accent;
+      ctx.beginPath(); ctx.arc(x(lastIdx), y(actual[lastIdx]), 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = text; ctx.textAlign = "left";
+      ctx.fillText("today", x(lastIdx) + 8, y(actual[lastIdx]) - 8);
+    }
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+  // drag & drop wiring
+  document.querySelectorAll(".col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", () => col.classList.remove("over"));
+    col.addEventListener("drop", e => {
+      e.preventDefault(); col.classList.remove("over");
+      const id = Number(e.dataTransfer.getData("text/plain"));
+      moveTask(id, STATUSES.indexOf(col.dataset.status));
+    });
+  });
+
+  $("filterText").addEventListener("input", renderBoard);
+  $("filterAssignee").addEventListener("change", renderBoard);
+  $("sprint").addEventListener("change", renderBoard);
+
+  $("btnAdd").addEventListener("click", () => {
+    const title = prompt("Task title:");
+    if (!title) return;
+    const hours = Number(prompt("Estimate (hours):", "3")) || 3;
+    const priority = prompt("Priority (low/medium/high/urgent):", "medium") || "medium";
+    const who = PEOPLE[Math.floor(Math.random() * PEOPLE.length)];
+    tasks.push({
+      id: nextId++, title, status: "todo",
+      priority: ["low", "medium", "high", "urgent"].includes(priority) ? priority : "medium",
+      hours, assignee: who, due: dayOffset(7), sprint: currentSprint().id, completedAt: null
+    });
+    renderBoard();
+  });
+
+  // populate selects
+  const fa = $("filterAssignee");
+  Object.entries(NAMES).forEach(([k, v]) => {
+    const o = document.createElement("option"); o.value = k; o.textContent = v; fa.appendChild(o);
+  });
+  const sp = $("sprint");
+  sprints.forEach(s => {
+    const o = document.createElement("option"); o.value = s.id; o.textContent = s.name; sp.appendChild(o);
+  });
+  sp.value = String(sprints[1].id);
+
+  renderBoard();
+  window.addEventListener("resize", drawBurndown);
+})();
+</script>
+</body>
+</html>
