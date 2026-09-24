@@ -1,5 +1,7 @@
 # Project Tracker
 
+**Live demo:** https://umer-78.github.io/project-tracker/
+
 [![CI](https://github.com/umer-78/project-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/umer-78/project-tracker/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688)
