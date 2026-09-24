@@ -191,9 +191,20 @@ footer a:hover { color: var(--accent); }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
 <div class="wrap">
 <header class="top">
   <div class="brand">
@@ -208,7 +219,7 @@ footer a:hover { color: var(--accent); }
   </div>
 </header>
 
-<main>
+<main id="main">
 <section class="card" aria-label="Board controls">
   <h2><span class="section-num">01</span> Board</h2>
   <div class="controls">
