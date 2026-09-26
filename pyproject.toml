@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tracker"
+name = "project-tracker"
 version = "1.0.0"
-description = "Team project tracker: projects, sprints, a kanban board, workload and burndown, with a FastAPI backend and SQLite."
+description = "Team project management: kanban board with drag and drop, sprints, burndown, workload, roles and an audit trail. FastAPI + SQLite, no ORM, no frontend framework."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Umer Hashmi" }]
