@@ -3,6 +3,8 @@
 **Live demo:** https://umer-78.github.io/project-tracker/
 
 [![CI](https://github.com/umer-78/project-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/umer-78/project-tracker/actions/workflows/ci.yml)
+
+[![Project Tracker: the live demo](.github/preview.jpg)](https://umer-78.github.io/project-tracker/)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688)
 ![SQLite](https://img.shields.io/badge/SQLite-no%20ORM-003b57)
